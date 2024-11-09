@@ -18,19 +18,19 @@ public class Spawner : MonoBehaviour
 
     private ObjectPool<DropDownCube> _pool;
 
-    private float _minXPos => _ground.position.x - _ground.localScale.x * 5 + _offset;
-    private float _maxXPos => _minXPos + _ground.localScale.x * 10 - _offset * 2;
-    private float _yPos => _ground.position.y + _height;
-    private float _minZPos => _ground.position.z - _ground.localScale.z * 5 + _offset;
-    private float _maxZPos => _minZPos + _ground.localScale.z * 10 - _offset * 2;
+    private float MinXPosition => _ground.position.x - _ground.localScale.x * 5 + _offset;
+    private float MaxXPosition => MinXPosition + _ground.localScale.x * 10 - _offset * 2;
+    private float YPosition => _ground.position.y + _height;
+    private float MinZPosition => _ground.position.z - _ground.localScale.z * 5 + _offset;
+    private float MaxZPosition => MinZPosition + _ground.localScale.z * 10 - _offset * 2;
 
     private void Awake()
     {
         _pool = new ObjectPool<DropDownCube>(
         createFunc: () => CreateCube(),
-        actionOnGet: (cube) => ActionOnGet(cube),
+        actionOnGet: (cube) => SetStartParameters(cube),
         actionOnRelease: (cube) => cube.gameObject.SetActive(false),
-        actionOnDestroy: (cube) => ActionOnDestroy(cube),
+        actionOnDestroy: (cube) => DestroyObjectInPool(cube),
         collectionCheck: true,
         defaultCapacity: _poolCapacity,
         maxSize: _poolMaxSize);
@@ -38,7 +38,7 @@ public class Spawner : MonoBehaviour
 
     private void Start()
     {
-        InvokeRepeating(nameof(GetCube), 0, _repeatRate);
+        StartCoroutine(BeginingCubesRain(_repeatRate));
     }
 
     private void GetCube()
@@ -57,18 +57,18 @@ public class Spawner : MonoBehaviour
     private void OnFallenDown(DropDownCube cube)
     {
         cube.SetMaterial(_materialHolder.GetMaterial());
-        StartCoroutine(CubeLifeTime(cube));
+        StartCoroutine(BeginCubeLifeTime(cube));
     }
 
-    private void ActionOnGet(DropDownCube cube)
+    private void SetStartParameters(DropDownCube cube)
     {
         cube.transform.position = GetSpawnPosition();
         cube.SetMaterial(_materialHolder.DefaultMaterial);
-        cube.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        cube.Rigidbody.velocity = Vector3.zero;
         cube.gameObject.SetActive(true);
     }
 
-    private void ActionOnDestroy(DropDownCube cube)
+    private void DestroyObjectInPool(DropDownCube cube)
     {
         cube.FallenDown -= OnFallenDown;
         Destroy(cube.gameObject);
@@ -76,16 +76,25 @@ public class Spawner : MonoBehaviour
 
     private Vector3 GetSpawnPosition()
     {
-        float xPos = Random.Range(_minXPos, _maxXPos);
-        float zPos = Random.Range(_minZPos, _maxZPos);
+        float xPosition = Random.Range(MinXPosition, MaxXPosition);
+        float zPosition = Random.Range(MinZPosition, MaxZPosition);
 
-        return new Vector3(xPos, _yPos, zPos);
+        return new Vector3(xPosition, YPosition, zPosition);
     }
 
-    private IEnumerator CubeLifeTime(DropDownCube cube)
+    private IEnumerator BeginCubeLifeTime(DropDownCube cube)
     {
         float timeToWait = Random.Range(_minCubeLifeTime, _maxCubeLifeTime + 1);
         yield return new WaitForSeconds(timeToWait);
         _pool.Release(cube);
+    }
+
+    private IEnumerator BeginingCubesRain(float repeatRate)
+    {
+        while(true)
+        {
+            GetCube();
+            yield return new WaitForSeconds(repeatRate);
+        }
     }
 }

@@ -5,10 +5,13 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public class DropDownCube : MonoBehaviour
 {
-    public event Action<DropDownCube> FallenDown;
-
     private bool _isFirstCollision;
     private MeshRenderer _renderer;
+    private Rigidbody _rigidbody;
+
+    public event Action<DropDownCube> FallenDown;
+
+    public Rigidbody Rigidbody => _rigidbody;
 
     private void OnEnable()
     {
@@ -18,11 +21,12 @@ public class DropDownCube : MonoBehaviour
     private void Awake()
     { 
         _renderer = GetComponent<MeshRenderer>();
+        _rigidbody = GetComponent<Rigidbody>();
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(collision.transform.tag == "Ground" && _isFirstCollision)
+        if(collision.gameObject.TryGetComponent<Platform>(out Platform _) && _isFirstCollision)
         {
             _isFirstCollision = false;
             FallenDown?.Invoke(this);
