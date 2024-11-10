@@ -17,6 +17,7 @@ public class Spawner : MonoBehaviour
     private readonly int _maxCubeLifeTime = 5;
 
     private ObjectPool<DropDownCube> _pool;
+    private WaitForSeconds _timeToWait;
 
     private float MinXPosition => _ground.position.x - _ground.localScale.x * 5 + _offset;
     private float MaxXPosition => MinXPosition + _ground.localScale.x * 10 - _offset * 2;
@@ -34,11 +35,13 @@ public class Spawner : MonoBehaviour
         collectionCheck: true,
         defaultCapacity: _poolCapacity,
         maxSize: _poolMaxSize);
+
+        _timeToWait = new WaitForSeconds(_repeatRate);
     }
 
     private void Start()
     {
-        StartCoroutine(BeginingCubesRain(_repeatRate));
+        StartCoroutine(BeginingCubesRain());
     }
 
     private void GetCube()
@@ -89,12 +92,12 @@ public class Spawner : MonoBehaviour
         _pool.Release(cube);
     }
 
-    private IEnumerator BeginingCubesRain(float repeatRate)
+    private IEnumerator BeginingCubesRain()
     {
         while(true)
         {
             GetCube();
-            yield return new WaitForSeconds(repeatRate);
+            yield return _timeToWait;
         }
     }
 }
